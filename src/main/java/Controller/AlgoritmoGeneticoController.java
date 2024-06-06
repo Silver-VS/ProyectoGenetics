@@ -11,27 +11,26 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
  * Controlador para manejar la lógica del algoritmo genético y la interacción con la vista.
  */
 public class AlgoritmoGeneticoController {
-    private AlgoritmoGeneticoView view;
     private AlgoritmoGenetico algoritmoGenetico;
 
     public AlgoritmoGeneticoController(AlgoritmoGeneticoView view) {
-        this.view = view;
-        this.view.setController(this);
+        view.setController(this);
     }
 
-    public void iniciarAlgoritmo(int tamanoPoblacion, int ciclos, double porcentajeMutacion, FunctionType functionType, boolean maximizar, TextArea outputArea) {
+    public void iniciarAlgoritmo(int tamanoPoblacion, int ciclos, double porcentajeMutacion, FunctionType functionType, boolean maximizar, double minValue, double maxValue, TextArea outputArea) {
         try {
-            algoritmoGenetico = new AlgoritmoGenetico(tamanoPoblacion, ciclos, porcentajeMutacion, maximizar, functionType);
+            algoritmoGenetico = new AlgoritmoGenetico(tamanoPoblacion, ciclos, porcentajeMutacion, maximizar, functionType, minValue, maxValue);
             algoritmoGenetico.ejecutar();
 
             mostrarResultados(outputArea);
-            graficarResultados();
+            graficarResultados(tamanoPoblacion, ciclos, porcentajeMutacion, functionType, maximizar, minValue, maxValue);
         } catch (NumberFormatException | NullPointerException e) {
             outputArea.appendText("Por favor ingrese valores válidos y seleccione una función.\n");
         }
@@ -43,7 +42,7 @@ public class AlgoritmoGeneticoController {
         outputArea.appendText("Mejor individuo final: " + algoritmoGenetico.getMejorIndividuo() + "\n");
     }
 
-    private void graficarResultados() {
+    private void graficarResultados(int tamanoPoblacion, int ciclos, double porcentajeMutacion, FunctionType functionType, boolean maximizar, double minValue, double maxValue) {
         ArrayList<Double> historiaMejorAptitud = algoritmoGenetico.getHistoriaMejorAptitud();
 
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
@@ -60,11 +59,29 @@ public class AlgoritmoGeneticoController {
                 true, true, false);
 
         ChartPanel chartPanel = new ChartPanel(lineChart);
-        chartPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+        chartPanel.setPreferredSize(new Dimension(800, 600));
 
-        JFrame chartFrame = new JFrame("Evolución de la Mejor Aptitud");
-        chartFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        chartFrame.getContentPane().add(chartPanel);
+        // Crear ventana para la gráfica y detalles
+        JFrame chartFrame = new JFrame("Resultados del Algoritmo Genético");
+        chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        chartFrame.getContentPane().setLayout(new BorderLayout());
+        chartFrame.getContentPane().add(chartPanel, BorderLayout.CENTER);
+
+        // Añadir detalles a la ventana
+        JTextArea detailsArea = new JTextArea();
+        detailsArea.setEditable(false);
+        detailsArea.setText("Detalles del Algoritmo:\n");
+        detailsArea.append("Tamaño de la población: " + tamanoPoblacion + "\n");
+        detailsArea.append("Número de generaciones: " + ciclos + "\n");
+        detailsArea.append("Porcentaje de mutación: " + porcentajeMutacion + "\n");
+        detailsArea.append("Función: " + functionType + "\n");
+        detailsArea.append("Maximizar: " + maximizar + "\n");
+        detailsArea.append("Rango: [" + minValue + ", " + maxValue + "]\n");
+        detailsArea.append("Mejor individuo final: " + algoritmoGenetico.getMejorIndividuo() + "\n");
+
+        JScrollPane scrollPane = new JScrollPane(detailsArea);
+        chartFrame.getContentPane().add(scrollPane, BorderLayout.SOUTH);
+
         chartFrame.pack();
         chartFrame.setVisible(true);
     }
